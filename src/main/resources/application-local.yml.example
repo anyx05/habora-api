@@ -1,0 +1,18 @@
+# Copy this file to application-local.yml and fill in your Supabase credentials.
+# Never commit application-local.yml — it is in .gitignore.
+#
+# Run the app with: ./gradlew bootRun --args='--spring.profiles.active=local'
+# Or set env var: SPRING_PROFILES_ACTIVE=local
+
+spring:
+  datasource:
+    url: jdbc:postgresql://<db-host>:<port>/<dbname>?sslmode=require
+    username: <supabase-db-user>
+    password: <supabase-db-password>
+
+  # Optional: override JWT issuer for local dev (e.g. Supabase project URL)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://<supabase-project-ref>.supabase.co/auth/v1
