@@ -9,6 +9,16 @@ spring:
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Supabase Session pooler closes idle connections after ~10 min.
+      # max-lifetime below that threshold prevents stale connection reuse.
+      maximum-pool-size: 5
+      minimum-idle: 1
+      max-lifetime: 540000        # 9 min — recycle before Supabase closes at ~10 min
+      idle-timeout: 300000        # 5 min
+      connection-timeout: 30000   # 30 s
+      keepalive-time: 240000      # 4 min — ping to keep connections alive
+      connection-test-query: SELECT 1
   jpa:
     hibernate:
       ddl-auto: none

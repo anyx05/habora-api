@@ -5,11 +5,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -42,6 +44,22 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest()
                 .body(ErrorResponse.withFields(400, "Bad Request", "Validation failed",
                         request.getRequestURI(), fields));
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    ResponseEntity<ErrorResponse> handleResponseStatus(ResponseStatusException ex, HttpServletRequest request) {
+        HttpStatusCode status = ex.getStatusCode();
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        if (status == HttpStatus.NOT_FOUND) {
+            log.debug("404 on {} {}: {}", request.getMethod(), request.getRequestURI(), reason);
+        } else if (status.is4xxClientError()) {
+            log.warn("Client error {} on {} {}: {}", status.value(), request.getMethod(), request.getRequestURI(), reason);
+        } else {
+            log.error("Server error {} on {} {}", status.value(), request.getMethod(), request.getRequestURI(), ex);
+        }
+        String errorPhrase = status instanceof HttpStatus hs ? hs.getReasonPhrase() : "Error";
+        return ResponseEntity.status(status)
+                .body(ErrorResponse.of(status.value(), errorPhrase, reason, request.getRequestURI()));
     }
 
     @ExceptionHandler(Exception.class)
